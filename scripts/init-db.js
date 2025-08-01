@@ -4,12 +4,10 @@ async function initializeDatabase() {
     try {
         console.log('Running database migrations...');
         
-        // Run migrations
         await db.migrate.latest();
         
         console.log('Database migrations completed successfully');
         
-        // Optional: Insert sample data
         const sampleFleet = await db('fleets')
             .insert({
                 id: 1,

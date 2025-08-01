@@ -1,11 +1,9 @@
-// Database models
 import Vehicle from '../models/Vehicle.js';
 import Fleet from '../models/Fleet.js';
 import TelemetryData from '../models/TelemetryData.js';
 import Alert from '../models/Alert.js';
 import FleetAnalytics from '../models/FleetAnalytics.js';
 
-// Export models for use in API routes and helpers
 export {
   Vehicle,
   Fleet,
@@ -14,7 +12,7 @@ export {
   FleetAnalytics
 };
 
-// Legacy compatibility - remove these once all files are updated
+// legacy compatibility
 export const db = {
   get: async (vin) => {
     const vehicle = await Vehicle.findByVinWithTelemetryHistory(vin);

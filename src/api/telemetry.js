@@ -1,6 +1,7 @@
 import express from 'express';
 import { Vehicle, TelemetryData, Fleet } from '../storage/index.js';
 import { checkAlerts } from '../helpers/alerts.js';
+import { incrementTelemetryReceived } from '../monitoring/prometheus.js';
 
 const router = express.Router();
 
@@ -78,7 +79,6 @@ router.post('/:vin', async (req, res) => {
         const { vin } = req.params;
         const telemetryData = req.body;
 
-        // Validate required fields
         const requiredFields = ['latitude', 'longitude', 'speed', 'engine_status', 'fuel_level', 'odometer'];
         for (const field of requiredFields) {
             if (telemetryData[field] === undefined || telemetryData[field] === null) {
@@ -86,18 +86,15 @@ router.post('/:vin', async (req, res) => {
             }
         }
 
-        // Find vehicle
         const vehicle = await Vehicle.findByVin(vin);
         if (!vehicle) {
             return res.status(404).json({ error: 'Vehicle not found' });
         }
 
-        // Set timestamp if not provided
         if (!telemetryData.timestamp) {
             telemetryData.timestamp = new Date();
         }
 
-        // Create telemetry record
         const telemetry = await TelemetryData.createForVehicle(vehicle.id, {
             latitude: telemetryData.latitude || telemetryData.lat,
             longitude: telemetryData.longitude || telemetryData.lon,
@@ -109,8 +106,9 @@ router.post('/:vin', async (req, res) => {
             timestamp: telemetryData.timestamp
         });
 
-        // Check for alerts
         await checkAlerts(vin, telemetryData);
+
+        incrementTelemetryReceived(vin, vehicle.fleet_id);
 
         res.status(201).json({
             message: 'Telemetry data received successfully',
@@ -122,7 +120,6 @@ router.post('/:vin', async (req, res) => {
     }
 });
 
-// Bulk telemetry upload for multiple vehicles
 router.post('/bulk', async (req, res) => {
     try {
         const { telemetry_data } = req.body;
@@ -144,7 +141,6 @@ router.post('/bulk', async (req, res) => {
                     continue;
                 }
 
-                // Set timestamp if not provided
                 if (!telemetryInfo.timestamp) {
                     telemetryInfo.timestamp = new Date();
                 }
@@ -160,7 +156,6 @@ router.post('/bulk', async (req, res) => {
                     timestamp: telemetryInfo.timestamp
                 });
 
-                // Check for alerts
                 await checkAlerts(vin, telemetryInfo);
 
                 results.push({ vin, telemetry_id: telemetry.id, status: 'success' });

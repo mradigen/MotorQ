@@ -1,5 +1,6 @@
 import { Vehicle, Alert } from "../storage/index.js";
 import config from "../config/index.js";
+import { incrementAlertsCreated } from "../monitoring/prometheus.js";
 
 export async function checkAlerts(vin, telemetryData) {
     const vehicle = await Vehicle.findByVin(vin);
@@ -38,6 +39,12 @@ async function checkSpeedViolations(vehicleId, telemetryData) {
                     timestamp: new Date(telemetryData.timestamp)
                 });
                 
+                // Track metric
+                const vehicle = await Vehicle.findById(vehicleId);
+                if (vehicle) {
+                    incrementAlertsCreated(vehicle.vin, vehicle.fleet_id, 'Overspeeding', i + 1);
+                }
+                
                 console.log(`Speed violation alert created for vehicle ID ${vehicleId}`);
             } else {
                 // Update existing alert severity
@@ -75,6 +82,12 @@ async function checkLowFuelAlerts(vehicleId, telemetryData) {
                     telemetry_data: telemetryData,
                     timestamp: new Date(telemetryData.timestamp)
                 });
+                
+                // Track metric
+                const vehicle = await Vehicle.findById(vehicleId);
+                if (vehicle) {
+                    incrementAlertsCreated(vehicle.vin, vehicle.fleet_id, 'Low Fuel', i + 1);
+                }
                 
                 console.log(`Low fuel alert created for vehicle ID ${vehicleId}`);
             } else {

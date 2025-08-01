@@ -1,18 +1,16 @@
 #!/bin/bash
 set -e
 
-echo "Waiting for PostgreSQL to be ready..."
+echo "Waiting for postgres"
 until pg_isready -h postgres -U postgres; do
   sleep 1
 done
 
-echo "Running database migrations..."
+echo "Running db migrations"
 pnpm run migrate
 
-echo "Seeding database with sample data..."
+echo "Adding sample data"
 pnpm run db:seed
 
-echo "Database initialization complete!"
-
-echo "Starting the application..."
+echo "DB initialized, starting app"
 exec "$@"

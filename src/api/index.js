@@ -4,6 +4,7 @@ import telemetry from './telemetry.js';
 import alerts from './alerts.js';
 import analytics from './analytics.js';
 import admin from './admin.js';
+import monitoring from './monitoring.js';
 import { Vehicle } from '../storage/index.js';
 import { authenticateToken } from '../middleware/auth.js';
 
@@ -11,13 +12,11 @@ const app = express();
 
 app.use(express.json());
 
-// Public routes (no authentication required)
 app.use("/telemetry", telemetry);
+app.use("/monitoring", monitoring); // Prometheus metrics
 
-// Admin routes (separate authentication)
 app.use("/admin", admin);
 
-// Protected routes (authentication required)
 app.use("/vehicle", authenticateToken, vehicle);
 app.use("/alerts", authenticateToken, alerts);
 app.use("/analytics", authenticateToken, analytics);
@@ -49,13 +48,8 @@ app.get('/stats/:vin', authenticateToken, async (req, res) => {
     }
 });
 
-// Health check endpoint
 app.get('/health', (req, res) => {
     res.json({ status: 'healthy', timestamp: new Date().toISOString() });
 });
-
-app.listen(3000, "0.0.0.0", (e) => {
-    console.log("API started on port 3000");
-})
 
 export default app;
