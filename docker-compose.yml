@@ -1,3 +1,7 @@
+version: '3.8'
+
+name: motorq
+
 services:
   postgres:
     image: postgres:15
@@ -10,12 +14,65 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./docker-init:/docker-entrypoint-initdb.d
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 30s
       timeout: 10s
       retries: 3
+    networks:
+      - motorq-network
+
+  app-migration:
+    build: .
+    container_name: motorq_migration
+    environment:
+      - NODE_ENV=production
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=password
+      - DB_NAME=motorq_fleet
+      - HIGH_SPEED_THRESHOLDS=[50, 80, 100, 120]
+      - LOW_FUEL_THRESHOLDS=[15, 10, 5]
+      - ANALYTICS_INTERVAL_SECONDS=300
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: sh -c "pnpm run migrate && pnpm run db:seed"
+    networks:
+      - motorq-network
+    restart: "no"
+
+  app:
+    build: .
+    container_name: motorq_app
+    environment:
+      - NODE_ENV=production
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=password
+      - DB_NAME=motorq_fleet
+      - HIGH_SPEED_THRESHOLDS=[50, 80, 100, 120]
+      - LOW_FUEL_THRESHOLDS=[15, 10, 5]
+      - ANALYTICS_INTERVAL_SECONDS=300
+      - PORT=3000
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      app-migration:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    networks:
+      - motorq-network
 
   pgadmin:
     image: dpage/pgadmin4:latest
@@ -29,7 +86,13 @@ services:
       - postgres
     volumes:
       - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - motorq-network
 
 volumes:
   postgres_data:
   pgadmin_data:
+
+networks:
+  motorq-network:
+    driver: bridge
