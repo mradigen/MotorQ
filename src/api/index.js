@@ -3,19 +3,27 @@ import vehicle from './vehicle.js';
 import telemetry from './telemetry.js';
 import alerts from './alerts.js';
 import analytics from './analytics.js';
+import admin from './admin.js';
 import { Vehicle } from '../storage/index.js';
+import { authenticateToken } from '../middleware/auth.js';
 
 const app = express();
 
 app.use(express.json());
 
-app.use("/vehicle", vehicle);
+// Public routes (no authentication required)
 app.use("/telemetry", telemetry);
-app.use("/alerts", alerts);
-app.use("/analytics", analytics);
 
-// Legacy compatibility endpoint
-app.get('/stats/:vin', async (req, res) => {
+// Admin routes (separate authentication)
+app.use("/admin", admin);
+
+// Protected routes (authentication required)
+app.use("/vehicle", authenticateToken, vehicle);
+app.use("/alerts", authenticateToken, alerts);
+app.use("/analytics", authenticateToken, analytics);
+
+// Legacy compatibility endpoint (protected)
+app.get('/stats/:vin', authenticateToken, async (req, res) => {
     try {
         const { vin } = req.params;
         const vehicle = await Vehicle.findByVinWithLatestTelemetry(vin);
