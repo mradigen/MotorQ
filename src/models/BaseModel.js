@@ -33,12 +33,16 @@ class BaseModel {
   }
 
   static async update(id, data) {
+    const updateData = { ...data };
+    
+    // Only add updated_at if the table has this column
+    if (this.tableName !== 'fleet_analytics') {
+      updateData.updated_at = new Date();
+    }
+    
     const [result] = await this.db(this.tableName)
       .where('id', id)
-      .update({
-        ...data,
-        updated_at: new Date()
-      })
+      .update(updateData)
       .returning('*');
     return result;
   }

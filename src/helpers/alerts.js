@@ -30,6 +30,7 @@ async function checkSpeedViolations(vehicleId, telemetryData) {
                 const alertId = Math.random().toString(36).substring(2, 15);
                 
                 await Alert.createForVehicle(vehicleId, {
+                    alert_id: alertId,
                     violation_type: 'Overspeeding',
                     severity: i + 1,
                     description: `Vehicle exceeded speed limit: ${telemetryData.speed} km/h (Threshold: ${speedThresholds[i]} km/h)`,
@@ -67,6 +68,7 @@ async function checkLowFuelAlerts(vehicleId, telemetryData) {
                 const alertId = Math.random().toString(36).substring(2, 15);
                 
                 await Alert.createForVehicle(vehicleId, {
+                    alert_id: alertId,
                     violation_type: 'Low Fuel',
                     severity: i + 1,
                     description: `Vehicle fuel level is low: ${telemetryData.fuel_level}% (Threshold: ${fuelThresholds[i]}%)`,

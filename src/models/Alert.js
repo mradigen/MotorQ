@@ -7,6 +7,7 @@ class Alert extends BaseModel {
 
   static async createForVehicle(vehicleId, alertData) {
     const {
+      alert_id,
       violation_type,
       severity,
       description,
@@ -15,6 +16,7 @@ class Alert extends BaseModel {
     } = alertData;
 
     return await this.create({
+      alert_id,
       vehicle_id: vehicleId,
       violation_type,
       severity,

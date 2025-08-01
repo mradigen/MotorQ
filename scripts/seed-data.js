@@ -99,6 +99,7 @@ async function seedSampleData() {
         // Speed violation alert
         alertPromises.push(
             Alert.createForVehicle(createdVehicles[0].id, {
+                alert_id: Math.random().toString(36).substring(2, 15),
                 violation_type: 'Overspeeding',
                 severity: 3,
                 description: 'Vehicle exceeded speed limit: 95 km/h',
@@ -110,6 +111,7 @@ async function seedSampleData() {
         // Low fuel alert
         alertPromises.push(
             Alert.createForVehicle(createdVehicles[1].id, {
+                alert_id: Math.random().toString(36).substring(2, 15),
                 violation_type: 'Low Fuel',
                 severity: 2,
                 description: 'Vehicle fuel level is low: 12%',

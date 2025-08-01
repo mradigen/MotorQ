@@ -127,15 +127,21 @@ export const fleet_db = {
 
 export const alert_db = {
   get: async (alertId) => {
-    const alert = await Alert.findById(alertId);
-    return alert;
+    const alert = await Alert.findAll({ alert_id: alertId });
+    return alert.length > 0 ? alert[0] : null;
   },
   
   create: async (alertId, data) => {
     try {
       await Alert.create({
         alert_id: alertId,
-        ...data
+        vehicle_id: data.vehicle_id,
+        violation_type: data.violation || data.violation_type,
+        severity: data.severity,
+        description: data.description,
+        telemetry_data: JSON.stringify(data.data || data.telemetry_data),
+        timestamp: new Date(data.timestamp),
+        created_at: new Date()
       });
       return null;
     } catch (error) {
